@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVA | Modern Clothing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .hero-section {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='600' viewBox='0 0 1200 600'%3E%3Crect width='1200' height='600' fill='%23333'/%3E%3Cpath d='M0,400 Q300,300 600,400 T1200,400 L1200,600 L0,600 Z' fill='%23222'/%3E%3C/svg%3E");
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-card img {
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover img {
+            transform: scale(1.05);
+        }
+        
+        .cart-item {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .category-btn.active {
+            background-color: #1a1a1a;
+            color: white;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: #1a1a1a;
+            color: white;
+            border-radius: 5px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="notification" class="notification"></div>
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="#" class="text-2xl font-bold text-gray-800">NOVA</a>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="#" class="text-gray-600 hover:text-black transition">Home</a>
+                    <a href="#shop" class="text-gray-600 hover:text-black transition">Shop</a>
+                    <a href="#collections" class="text-gray-600 hover:text-black transition">Collections</a>
+                    <a href="#about" class="text-gray-600 hover:text-black transition">About</a>
+                    <a href="#contact" class="text-gray-600 hover:text-black transition">Contact</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="search-btn" class="text-gray-600 hover:text-black transition">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button id="account-btn" class="text-gray-600 hover:text-black transition">
+                        <i class="fas fa-user"></i>
+                    </button>
+                    <button id="cart-btn" class="text-gray-600 hover:text-black transition relative">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                    </button>
+                    <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-black transition">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden hidden pt-4 pb-2">
+                <a href="#" class="block py-2 text-gray-600 hover:text-black transition">Home</a>
+                <a href="#shop" class="block py-2 text-gray-600 hover:text-black transition">Shop</a>
+                <a href="#collections" class="block py-2 text-gray-600 hover:text-black transition">Collections</a>
+                <a href="#about" class="block py-2 text-gray-600 hover:text-black transition">About</a>
+                <a href="#contact" class="block py-2 text-gray-600 hover:text-black transition">Contact</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Search Overlay -->
+    <div id="search-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center h-full">
+            <div class="bg-white p-8 rounded-lg w-full max-w-2xl mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Search Products</h2>
+                    <button id="close-search" class="text-gray-600 hover:text-black">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="relative">
+                    <input type="text" id="search-input" placeholder="Search for products..." class="w-full border border-gray-300 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-black">
+                    <button class="absolute right-3 top-3 text-gray-600">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="search-results" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Sidebar -->
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+        <div class="p-6 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Your Cart</h2>
+                <button id="close-cart" class="text-gray-600 hover:text-black">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="cart-items" class="flex-grow overflow-y-auto">
+                <!-- Cart items will be added here dynamically -->
+                <div class="text-center text-gray-500 py-8" id="empty-cart-message">
+                    Your cart is empty
+                </div>
+            </div>
+            
+            <div class="border-t pt-4 mt-4">
+                <div class="flex justify-between mb-4">
+                    <span class="font-semibold">Subtotal:</span>
+                    <span id="cart-subtotal" class="font-bold">$0.00</span>
+                </div>
+                <button id="checkout-btn" class="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition">
+                    Checkout
+                </button>
+                <button id="continue-shopping" class="w-full border border-black text-black py-3 rounded-lg mt-3 hover:bg-gray-100 transition">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hero Section -->
+    <section class="hero-section h-screen flex items-center justify-center text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4">Redefine Your Style</h1>
+            <p class="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">Discover the latest trends in fashion with our new collection.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#shop" class="bg-white text-black px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">Shop Now</a>
+                <a href="#collections" class="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-black transition">View Collections</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Featured Categories -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Shop by Category</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="relative overflow-hidden rounded-lg group cursor-pointer h-80">
+                    <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition duration-300"></div>
+                    <div class="bg-gray-200 h-full w-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-16 h-16 text-gray-700 fill-current">
+                            <path d="M16 4c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm-6 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zM6 4c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm6 6v10h-4v-10h4zm2 0h4v10h-4v-10zm-8 0h4v10H6v-10z"/>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-white mb-2">Men</h3>
+                            <a href="#" class="inline-block bg-white text-black px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative overflow-hidden rounded-lg group cursor-pointer h-80">
+                    <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition duration-300"></div>
+                    <div class="bg-gray-200 h-full w-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-16 h-16 text-gray-700 fill-current">
+                            <path d="M16 4c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm-6 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zM6 4c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm10 16V10h-4v10h4zm-6 0V10H6v10h4z"/>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-white mb-2">Women</h3>
+                            <a href="#" class="inline-block bg-white text-black px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative overflow-hidden rounded-lg group cursor-pointer h-80">
+                    <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition duration-300"></div>
+                    <div class="bg-gray-200 h-full w-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-16 h-16 text-gray-700 fill-current">
+                            <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-4 9.5V8h8v3.5c0 .8-.7 1.5-1.5 1.5h-5c-.8 0-1.5-.7-1.5-1.5zm8 4.5v6h-8v-6h8z"/>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-white mb-2">Accessories</h3>
+                            <a href="#" class="inline-block bg-white text-black px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- New Arrivals -->
+    <section id="shop" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-6">New Arrivals</h2>
+            <p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">Discover our latest collection of trendy and comfortable clothing designed for the modern lifestyle.</p>
+            
+            <div class="flex flex-wrap justify-center gap-4 mb-10">
+                <button class="category-btn active px-6 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition" data-category="all">All</button>
+                <button class="category-btn px-6 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition" data-category="men">Men</button>
+                <button class="category-btn px-6 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition" data-category="women">Women</button>
+                <button class="category-btn px-6 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition" data-category="accessories">Accessories</button>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8" id="products-grid">
+                <!-- Products will be loaded here dynamically -->
+            </div>
+            
+            <div class="text-center mt-12">
+                <button id="load-more" class="bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition">Load More</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Product Modal -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-4xl mx-4 overflow-hidden">
+            <div class="flex flex-col md:flex-row">
+                <div class="md:w-1/2 p-6 flex items-center justify-center bg-gray-100">
+                    <img id="modal-image" src="" alt="Product" class="max-h-96 object-contain">
+                </div>
+                <div class="md:w-1/2 p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 id="modal-title" class="text-2xl font-bold mb-2"></h3>
+                            <p id="modal-price" class="text-xl font-semibold mb-4"></p>
+                        </div>
+                        <button id="close-modal" class="text-gray-600 hover:text-black">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <p id="modal-description" class="text-gray-600 mb-6"></p>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-2">Size:</h4>
+                        <div class="flex gap-2">
+                            <button class="size-btn w-10 h-10 border border-gray-300 rounded-full flex items-center justify-center hover:border-black transition" data-size="S">S</button>
+                            <button class="size-btn w-10 h-10 border border-gray-300 rounded-full flex items-center justify-center hover:border-black transition" data-size="M">M</button>
+                            <button class="size-btn w-10 h-10 border border-gray-300 rounded-full flex items-center justify-center hover:border-black transition" data-size="L">L</button>
+                            <button class="size-btn w-10 h-10 border border-gray-300 rounded-full flex items-center justify-center hover:border-black transition" data-size="XL">XL</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-2">Quantity:</h4>
+                        <div class="flex items-center">
+                            <button id="decrease-qty" class="w-10 h-10 border border-gray-300 rounded-l-lg flex items-center justify-center hover:bg-gray-100 transition">-</button>
+                            <input type="number" id="product-qty" value="1" min="1" class="w-16 h-10 border-t border-b border-gray-300 text-center focus:outline-none">
+                            <button id="increase-qty" class="w-10 h-10 border border-gray-300 rounded-r-lg flex items-center justify-center hover:bg-gray-100 transition">+</button>
+                        </div>
+                    </div>
+                    
+                    <button id="add-to-cart" class="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Collections -->
+    <section id="collections" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-6">Our Collections</h2>
+            <p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">Explore our carefully curated collections designed for every occasion.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="relative overflow-hidden rounded-lg group cursor-pointer h-96">
+                    <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-30 transition duration-300"></div>
+                    <div class="bg-gray-200 h-full w-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-24 h-24 text-gray-700 fill-current">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                            <path d="M12 8v5l4.25 2.52.77-1.28-3.52-2.09V8z"/>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-white mb-2">Summer 2023</h3>
+                            <p class="text-white mb-4">Light fabrics for hot days</p>
+                            <a href="#" class="inline-block bg-white text-black px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Explore</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative overflow-hidden rounded-lg group cursor-pointer h-96">
+                    <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-30 transition duration-300"></div>
+                    <div class="bg-gray-200 h-full w-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-24 h-24 text-gray-700 fill-current">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-white mb-2">Essentials</h3>
+                            <p class="text-white mb-4">Timeless pieces for your wardrobe</p>
+                            <a href="#" class="inline-block bg-white text-black px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Explore</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Newsletter -->
+    <section class="py-16 bg-gray-900 text-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-3xl font-bold mb-4">Join Our Newsletter</h2>
+                <p class="text-gray-300 mb-8">Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
+                <form id="newsletter-form" class="flex flex-col sm:flex-row gap-4">
+                    <input type="email" placeholder="Your email address" class="flex-grow px-4 py-3 rounded-lg focus:outline-none text-black" required>
+                    <button type="submit" class="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">Subscribe</button>
+                </form>
+                <p class="text-gray-400 mt-4 text-sm">By subscribing, you agree to our Privacy Policy and consent to receive updates from our company.</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- About -->
+    <section id="about" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-6">About NOVA</h2>
+                <p class="text-gray-600 text-center mb-12">We believe in creating sustainable, high-quality clothing that empowers you to express your unique style.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <div class="text-center">
+                        <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Fast Shipping</h3>
+                        <p class="text-gray-600">Get your order delivered to your doorstep in 2-4 business days.</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Quality Guarantee</h3>
+                        <p class="text-gray-600">We stand behind our products with a 100% satisfaction guarantee.</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Secure Payment</h3>
+                        <p class="text-gray-600">Your payment information is processed securely.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-8 rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">Our Story</h3>
+                    <p class="text-gray-600 mb-4">Founded in 2018, NOVA began with a simple mission: to create high-quality, sustainable clothing that empowers individuals to express their unique style while minimizing environmental impact.</p>
+                    <p class="text-gray-600 mb-4">Our team of designers works tirelessly to create pieces that are not only fashionable but also comfortable and durable. We source our materials ethically and ensure fair working conditions throughout our supply chain.</p>
+                    <p class="text-gray-600">Today, NOVA is proud to serve customers worldwide, offering a diverse range of clothing and accessories for every occasion. We remain committed to our founding principles and continue to innovate in sustainable fashion.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contact -->
+    <section id="contact" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-6">Contact Us</h2>
+            <p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">Have questions or feedback? We'd love to hear from you.</p>
+            
+            <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <form id="contact-form" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-gray-700 mb-2">Name</label>
+                            <input type="text" id="name" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" required>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-gray-700 mb-2">Email</label>
+                            <input type="email" id="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" required>
+                        </div>
+                        <div>
+                            <label for="subject" class="block text-gray-700 mb-2">Subject</label>
+                            <input type="text" id="subject" name="subject" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" required>
+                        </div>
+                        <div>
+                            <label for="message" class="block text-gray-700 mb-2">Message</label>
+                            <textarea id="message" name="message" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" required></textarea>
+                        </div>
+                        <div>
+                            <button type="submit" class="bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition">Send Message</button>
+                        </div>
+                        <p class="text-sm text-gray-500 italic">This is a demo form. In a real website, this would connect to a backend service.</p>
+                    </form>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold mb-4">Get In Touch</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center mr-4 mt-1">
+                                <i class="fas fa-map-marker-alt text-gray-700"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold">Address</h4>
+                                <p class="text-gray-600">123 Fashion Street, Design District, New York, NY 10001</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center mr-4 mt-1">
+                                <i class="fas fa-phone text-gray-700"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold">Phone</h4>
+                                <p class="text-gray-600">+1 (555) 123-4567</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center mr-4 mt-1">
+                                <i class="fas fa-envelope text-gray-700"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold">Email</h4>
+                                <p class="text-gray-600">info@novaclothing.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center mr-4 mt-1">
+                                <i class="fas fa-clock text-gray-700"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold">Business Hours</h4>
+                                <p class="text-gray-600">Monday - Friday: 9am - 6pm<br>Saturday: 10am - 4pm<br>Sunday: Closed</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="font-semibold mb-3">Follow Us</h4>
+                        <div class="flex space-x-4">
+                            <a href="#" class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition">
+                                <i class="fab fa-facebook-f text-gray-700"></i>
+                            </a>
+                            <a href="#" class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition">
+                                <i class="fab fa-instagram text-gray-700"></i>
+                            </a>
+                            <a href="#" class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition">
+                                <i class="fab fa-twitter text-gray-700"></i>
+                            </a>
+                            <a href="#" class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition">
+                                <i class="fab fa-pinterest text-gray-700"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">NOVA</h3>
+                    <p class="text-gray-400 mb-4">Redefining fashion with sustainable and stylish clothing for the modern individual.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-pinterest"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Shop</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Men's Clothing</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Women's Clothing</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Accessories</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">New Arrivals</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Sale</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Customer Service</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">FAQs</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Shipping & Returns</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Size Guide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Track Order</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">About</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Our Story</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Sustainability</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Press</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-400 mb-4 md:mb-0">&copy; 2023 NOVA Clothing. All rights reserved.</p>
+                    <div class="flex items-center space-x-4">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Crect width='40' height='24' rx='4' fill='%23fff'/%3E%3Cpath d='M13 9h14v6H13z' fill='%23000'/%3E%3C/svg%3E" alt="Visa" class="h-8">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Crect width='40' height='24' rx='4' fill='%23fff'/%3E%3Ccircle cx='16' cy='12' r='5' fill='%23ff0000'/%3E%3Ccircle cx='24' cy='12' r='5' fill='%23ffaa00'/%3E%3C/svg%3E" alt="Mastercard" class="h-8">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Crect width='40' height='24' rx='4' fill='%23fff'/%3E%3Cpath d='M8 7h24v10H8z' fill='%23003087'/%3E%3Ctext x='20' y='15' font-family='Arial' font-size='10' fill='%23fff' text-anchor='middle'%3EPal%3C/text%3E%3C/svg%3E" alt="PayPal" class="h-8">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Sample product data
+        const products = [
+            {
+                id: 1,
+                name: "Classic White T-Shirt",
+                price: 29.99,
+                category: "men",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Cpath d='M150,60 L100,80 L100,120 L80,130 L80,240 L220,240 L220,130 L200,120 L200,80 Z' fill='%23ffffff' stroke='%23e0e0e0' stroke-width='2'/%3E%3C/svg%3E",
+                description: "A comfortable and versatile classic white t-shirt made from 100% organic cotton. Perfect for everyday wear."
+            },
+            {
+                id: 2,
+                name: "Slim Fit Jeans",
+                price: 59.99,
+                category: "men",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Cpath d='M120,60 L180,60 L190,240 L160,240 L150,150 L140,240 L110,240 Z' fill='%234169e1' stroke='%233a5fcf' stroke-width='2'/%3E%3C/svg%3E",
+                description: "Modern slim fit jeans with a comfortable stretch. These versatile jeans pair well with any casual outfit."
+            },
+            {
+                id: 3,
+                name: "Floral Summer Dress",
+                price: 49.99,
+                category: "women",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Cpath d='M150,60 C130,60 100,70 100,90 L100,240 L200,240 L200,90 C200,70 170,60 150,60 Z' fill='%23ffb6c1' stroke='%23ff9aaf' stroke-width='2'/%3E%3Ccircle cx='120' cy='140' r='5' fill='%23ffffff'/%3E%3Ccircle cx='180' cy='120' r='5' fill='%23ffffff'/%3E%3Ccircle cx='150' cy='180' r='5' fill='%23ffffff'/%3E%3Ccircle cx='130' cy='200' r='5' fill='%23ffffff'/%3E%3Ccircle cx='170' cy='160' r='5' fill='%23ffffff'/%3E%3C/svg%3E",
+                description: "A beautiful floral summer dress with a flattering silhouette. Perfect for warm days and special occasions."
+            },
+            {
+                id: 4,
+                name: "Leather Crossbody Bag",
+                price: 79.99,
+                category: "accessories",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Cpath d='M80,100 L220,100 L220,200 L80,200 Z' fill='%23a0522d' stroke='%238b4513' stroke-width='2'/%3E%3Cpath d='M140,100 L160,100 L160,80 L140,80 Z' fill='%23a0522d' stroke='%238b4513' stroke-width='2'/%3E%3Cpath d='M110,150 L190,150' stroke='%238b4513' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E",
+                description: "A stylish leather crossbody bag with multiple compartments. The perfect accessory for any outfit."
+            },
+            {
+                id: 5,
+                name: "Oversized Hoodie",
+                price: 45.99,
+                category: "women",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Cpath d='M90,80 L210,80 L220,240 L80,240 Z' fill='%23d3d3d3' stroke='%23a9a9a9' stroke-width='2'/%3E%3Cpath d='M130,80 L170,80 L170,110 L130,110 Z' fill='%23d3d3d3' stroke='%23a9a9a9' stroke-width='2'/%3E%3Cpath d='M90,120 L120,120 L120,160 L90,160 Z' fill='%23d3d3d3' stroke='%23a9a9a9' stroke-width='2'/%3E%3Cpath d='M180,120 L210,120 L210,160 L180,160 Z' fill='%23d3d3d3' stroke='%23a9a9a9' stroke-width='2'/%3E%3C/svg%3E",
+                description: "A cozy oversized hoodie that's perfect for lounging or casual outings. Features a soft fleece lining for extra comfort."
+            },
+            {
+                id: 6,
+                name: "Classic Watch",
+                price: 129.99,
+                category: "accessories",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Ccircle cx='150' cy='150' r='70' fill='%23ffffff' stroke='%23333333' stroke-width='5'/%3E%3Ccircle cx='150' cy='150' r='60' fill='%23ffffff' stroke='%23333333' stroke-width='1'/%3E%3Cline x1='150' y1='100' x2='150' y2='150' stroke='%23333333' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='150' y1='150' x2='180' y2='150' stroke='%23333333' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M120,80 L180,80 L180,100 L120,100 Z' fill='%23333333'/%3E%3Cpath d='M120,220 L180,220 L180,200 L120,200 Z' fill='%23333333'/%3E%3C/svg%3E",
+                description: "A timeless classic watch with a leather strap. This elegant timepiece complements both casual and formal attire."
+            },
+            {
+                id: 7,
+                name: "Bomber Jacket",
+                price: 89.99,
+                category: "men",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Cpath d='M100,80 L200,80 L220,240 L80,240 Z' fill='%23006400' stroke='%23004d00' stroke-width='2'/%3E%3Cpath d='M130,80 L170,80 L170,110 L130,110 Z' fill='%23006400' stroke='%23004d00' stroke-width='2'/%3E%3Cpath d='M100,120 L200,120' stroke='%23004d00' stroke-width='2'/%3E%3Cpath d='M100,200 L200,200' stroke='%23004d00' stroke-width='2'/%3E%3C/svg%3E",
+                description: "A stylish bomber jacket that's perfect for transitional weather. Features ribbed cuffs and a comfortable fit."
+            },
+            {
+                id: 8,
+                name: "Knit Sweater",
+                price: 69.99,
+                category: "women",
+                image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f8f8'/%3E%3Cpath d='M100,80 L200,80 L200,240 L100,240 Z' fill='%23f08080' stroke='%23e06060' stroke-width='2'/%3E%3Cpath d='M130,80 L170,80 L170,110 L130,110 Z' fill='%23f08080' stroke='%23e06060' stroke-width='2'/%3E%3Cpath d='M100,140 L200,140' stroke='%23e06060' stroke-width='2' stroke-dasharray='5,5'/%3E%3Cpath d='M100,170 L200,170' stroke='%23e06060' stroke-width='2' stroke-dasharray='5,5'/%3E%3Cpath d='M100,200 L200,200' stroke='%23e06060' stroke-width='2' stroke-dasharray='5,5'/%3E%3C/svg%3E",
+                description: "A soft knit sweater that's both stylish and comfortable. Perfect for layering during cooler months."
+            }
+        ];
+        
+        // DOM Elements
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const searchBtn = document.getElementById('search-btn');
+        const searchOverlay = document.getElementById('search-overlay');
+        const closeSearchBtn = document.getElementById('close-search');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const cartBtn = document.getElementById('cart-btn');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const closeCartBtn = document.getElementById('close-cart');
+        const continueShoppingBtn = document.getElementById('continue-shopping');
+        const cartItems = document.getElementById('cart-items');
+        const cartCount = document.getElementById('cart-count');
+        const cartSubtotal = document.getElementById('cart-subtotal');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const productsGrid = document.getElementById('products-grid');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const loadMoreBtn = document.getElementById('load-more');
+        const productModal = document.getElementById('product-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalTitle = document.getElementById('modal-title');
+        const modalPrice = document.getElementById('modal-price');
+        const modalDescription = document.getElementById('modal-description');
+        const decreaseQtyBtn = document.getElementById('decrease-qty');
+        const increaseQtyBtn = document.getElementById('increase-qty');
+        const productQty = document.getElementById('product-qty');
+        const addToCartBtn = document.getElementById('add-to-cart');
+        const sizeBtns = document.querySelectorAll('.size-btn');
+        const newsletterForm = document.getElementById('newsletter-form');
+        const contactForm = document.getElementById('contact-form');
+        const notification = document.getElementById('notification');
+        
+        // Cart state
+        let cart = [];
+        let currentProduct = null;
+        let selectedSize = null;
+        
+        // Initialize the page
+        function init() {
+            renderProducts('all');
+            updateCartCount();
+        }
+        
+        // Event Listeners
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        searchBtn.addEventListener('click', openSearch);
+        closeSearchBtn.addEventListener('click', closeSearch);
+        searchInput.addEventListener('input', handleSearch);
+        cartBtn.addEventListener('click', openCart);
+        closeCartBtn.addEventListener('click', closeCart);
+        continueShoppingBtn.addEventListener('click', closeCart);
+        checkoutBtn.addEventListener('click', handleCheckout);
+        loadMoreBtn.addEventListener('click', loadMoreProducts);
+        closeModalBtn.addEventListener('click', closeProductModal);
+        decreaseQtyBtn.addEventListener('click', decreaseQuantity);
+        increaseQtyBtn.addEventListener('click', increaseQuantity);
+        addToCartBtn.addEventListener('click', addToCart);
+        
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+                categoryBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderProducts(category);
+            });
+        });
+        
+        sizeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sizeBtns.forEach(b => b.classList.remove('border-black'));
+                btn.classList.add('border-black');
+                selectedSize = btn.dataset.size;
+            });
+        });
+        
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            showNotification('Thanks for subscribing to our newsletter!');
+            newsletterForm.reset();
+        });
+        
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            showNotification('Your message has been sent. We\'ll get back to you soon!');
+            contactForm.reset();
+        });
+        
+        // Functions
+        function toggleMobileMenu() {
+            mobileMenu.classList.toggle('hidden');
+        }
+        
+        function openSearch() {
+            searchOverlay.classList.remove('hidden');
+            searchInput.focus();
+        }
+        
+        function closeSearch() {
+            searchOverlay.classList.add('hidden');
+            searchInput.value = '';
+            searchResults.innerHTML = '';
+        }
+        
+        function handleSearch() {
+            const query = searchInput.value.toLowerCase();
+            if (query.length < 2) {
+                searchResults.innerHTML = '';
+                return;
+            }
+            
+            const results = products.filter(product => 
+                product.name.toLowerCase().includes(query) || 
+                product.description.toLowerCase().includes(query)
+            );
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<p class="text-gray-500 py-4">No products found.</p>';
+                return;
+            }
+            
+            searchResults.innerHTML = results.map(product => `
+                <div class="flex items-center gap-4 p-3 border-b hover:bg-gray-50 cursor-pointer" onclick="openProductDetails(${product.id})">
+                    <img src="${product.image}" alt="${product.name}" class="w-16 h-16 object-cover">
+                    <div>
+                        <h4 class="font-semibold">${product.name}</h4>
+                        <p class="text-gray-600">$${product.price.toFixed(2)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function openCart() {
+            cartSidebar.classList.remove('translate-x-full');
+            updateCart();
+        }
+        
+        function closeCart() {
+            cartSidebar.classList.add('translate-x-full');
+        }
+        
+        function renderProducts(category) {
+            let filteredProducts = products;
+            if (category !== 'all') {
+                filteredProducts = products.filter(product => product.category === category);
+            }
+            
+            productsGrid.innerHTML = filteredProducts.map(product => `
+                <div class="product-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition duration-300">
+                    <div class="relative overflow-hidden h-64">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 hover:opacity-100 transition duration-300 flex items-center justify-center">
+                            <button onclick="openProductDetails(${product.id})" class="bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Quick View</button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold mb-2">${product.name}</h3>
+                        <p class="text-gray-800 font-medium">$${product.price.toFixed(2)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function loadMoreProducts() {
+            showNotification('No more products to load.');
+        }
+        
+        function openProductDetails(productId) {
+            currentProduct = products.find(p => p.id === productId);
+            if (!currentProduct) return;
+            
+            modalImage.src = currentProduct.image;
+            modalTitle.textContent = currentProduct.name;
+            modalPrice.textContent = `$${currentProduct.price.toFixed(2)}`;
+            modalDescription.textContent = currentProduct.description;
+            productQty.value = 1;
+            selectedSize = null;
+            
+            sizeBtns.forEach(btn => btn.classList.remove('border-black'));
+            
+            productModal.classList.remove('hidden');
+            closeSearch();
+        }
+        
+        function closeProductModal() {
+            productModal.classList.add('hidden');
+        }
+        
+        function decreaseQuantity() {
+            const qty = parseInt(productQty.value);
+            if (qty > 1) {
+                productQty.value = qty - 1;
+            }
+        }
+        
+        function increaseQuantity() {
+            const qty = parseInt(productQty.value);
+            productQty.value = qty + 1;
+        }
+        
+        function addToCart() {
+            if (!currentProduct) return;
+            if (!selectedSize) {
+                showNotification('Please select a size');
+                return;
+            }
+            
+            const qty = parseInt(productQty.value);
+            const existingItemIndex = cart.findIndex(item => 
+                item.id === currentProduct.id && item.size === selectedSize
+            );
+            
+            if (existingItemIndex !== -1) {
+                cart[existingItemIndex].quantity += qty;
+            } else {
+                cart.push({
+                    id: currentProduct.id,
+                    name: currentProduct.name,
+                    price: currentProduct.price,
+                    image: currentProduct.image,
+                    size: selectedSize,
+                    quantity: qty
+                });
+            }
+            
+            updateCartCount();
+            closeProductModal();
+            showNotification(`${currentProduct.name} added to cart`);
+        }
+        
+        function updateCartCount() {
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            cartCount.textContent = count;
+        }
+        
+        function updateCart() {
+            if (cart.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+                cartItems.innerHTML = '';
+                cartSubtotal.textContent = '$0.00';
+                return;
+            }
+            
+            emptyCartMessage.classList.add('hidden');
+            
+            cartItems.innerHTML = cart.map((item, index) => `
+                <div class="cart-item flex items-center gap-4 py-4 border-b">
+                    <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded">
+                    <div class="flex-grow">
+                        <h4 class="font-semibold">${item.name}</h4>
+                        <div class="flex items-center justify-between mt-2">
+                            <div>
+                                <p class="text-gray-600">Size: ${item.size}</p>
+                                <p class="text-gray-600">$${item.price.toFixed(2)} x ${item.quantity}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="updateCartItemQuantity(${index}, ${item.quantity - 1})" class="w-6 h-6 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200">-</button>
+                                <span>${item.quantity}</span>
+                                <button onclick="updateCartItemQuantity(${index}, ${item.quantity + 1})" class="w-6 h-6 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200">+</button>
+                                <button onclick="removeFromCart(${index})" class="ml-2 text-gray-500 hover:text-red-500">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+        }
+        
+        function updateCartItemQuantity(index, newQuantity) {
+            if (newQuantity < 1) {
+                removeFromCart(index);
+                return;
+            }
+            
+            cart[index].quantity = newQuantity;
+            updateCartCount();
+            updateCart();
+        }
+        
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            updateCart();
+        }
+        
+        function handleCheckout() {
+            if (cart.length === 0) {
+                showNotification('Your cart is empty');
+                return;
+            }
+            
+            showNotification('Checkout functionality would connect to a payment processor in a real store');
+        }
+        
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Make functions available globally
+        window.openProductDetails = openProductDetails;
+        window.updateCartItemQuantity = updateCartItemQuantity;
+        window.removeFromCart = removeFromCart;
+        
+        // Initialize the page
+        init();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'967a853c85b9a6da',t:'MTc1MzkzNzkwNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
